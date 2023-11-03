@@ -1,4 +1,7 @@
-from typing import Optional
+from collections.abc import dict_keys
+from typing import Optional, List
+
+from QuizCreator.question import Question
 from question import Question
 
 
@@ -32,3 +35,12 @@ class QuizRound:
                 return "There is no theme with question: " + str(question)
         else:
             return "There is no theme with name: " + name_theme
+
+    def get_round(self) -> dict[str, list[Question]]:
+        return self.themes
+
+    def get_themes(self) -> dict_keys[str, list[Question]]:
+        return self.themes.keys()
+
+    def get_questions_by_theme(self, theme: str) -> list[Question]:
+        return self.themes[theme]
