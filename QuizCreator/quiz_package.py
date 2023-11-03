@@ -1,6 +1,6 @@
 from typing import Optional
 
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ElTree
 
 from quiz_round import QuizRound
 from question import Question
@@ -34,3 +34,45 @@ class QuizPackage:
 
     def get_rounds(self) -> list[QuizRound]:
         return self.rounds
+
+
+def write_to_xml(package: QuizPackage):
+    data = ElTree.Element("package")
+
+    for quiz_round in package.get_rounds():
+        round_element = ElTree.SubElement(data, "Round")
+        quiz_name_element = ElTree.SubElement(round_element, "Name of quiz")
+        quiz_name_element.text = package.get_name()
+
+        themes = quiz_round.get_themes()
+
+        for theme in themes:
+            theme_element = ElTree.SubElement(round_element, "Theme")
+            name_element = ElTree.SubElement(theme_element, "Name of theme")
+            name_element.text = theme
+            questions_element = ElTree.SubElement(theme_element, "Questions")
+
+            for question in quiz_round.get_questions_by_theme(theme):
+                question_element = ElTree.SubElement(questions_element, "Question")
+
+                text_element = ElTree.SubElement(question_element, "Text")
+                text_element.text = question.get_text()
+
+                answers_element = ElTree.SubElement(question_element, "Answers")
+                for answer in question.get_answers():
+                    answer_element = ElTree.SubElement(answers_element, "Answer")
+                    answer_element.text = answer
+
+                points_element = ElTree.SubElement(question_element, "Points")
+                points_element.text = question.get_points()
+
+                type_content_element = ElTree.SubElement(question_element, "Type content")
+                type_content_element.text = question.get_type_content()
+
+                url_element = ElTree.SubElement(question_element, "URL")
+                url_element.text = question.get_url()
+
+    xml_text = ElTree.tostring(data)
+
+    with open(package.get_name() + ".quiz", "wb") as file_package:
+        file_package.write(xml_text)
