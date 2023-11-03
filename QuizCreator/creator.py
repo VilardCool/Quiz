@@ -1,6 +1,8 @@
 import os.path
 
 from question import Question
+from quiz_round import QuizRound
+from quiz_package import QuizPackage
 
 
 def create_question() -> Question:
@@ -44,3 +46,28 @@ def create_question() -> Question:
         else:
             print("File not exists, try again.")
     return Question(text, answers, points, type_content, url)
+
+
+def create_round() -> QuizRound:
+    number_of_themes = int(input("Enter number of themes: "))
+    quiz_round = {}
+    while number_of_themes > 0:
+        theme = input("Enter theme name: ")
+        number_of_questions = int(input("Enter number of question: "))
+        questions = []
+        while number_of_questions > 0:
+            questions.append(create_question())
+            number_of_questions -= 1
+        quiz_round[theme] = questions
+        number_of_themes -= 1
+    return QuizRound(quiz_round)
+
+
+def create_quiz() -> QuizPackage:
+    name = input("Enter name of quiz: ")
+    number_of_rounds = int(input("Enter number of rounds: "))
+    rounds = []
+    while number_of_rounds > 0:
+        rounds.append(create_round())
+        number_of_rounds -= 1
+    return QuizPackage(name, rounds, None)
