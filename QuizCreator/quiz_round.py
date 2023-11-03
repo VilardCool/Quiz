@@ -1,7 +1,5 @@
-from collections.abc import dict_keys
-from typing import Optional, List
+from typing import Optional
 
-from QuizCreator.question import Question
 from question import Question
 
 
@@ -39,7 +37,7 @@ class QuizRound:
     def get_round(self) -> dict[str, list[Question]]:
         return self.themes
 
-    def get_themes(self) -> dict_keys[str, list[Question]]:
+    def get_themes(self):
         return self.themes.keys()
 
     def get_questions_by_theme(self, theme: str) -> list[Question]:

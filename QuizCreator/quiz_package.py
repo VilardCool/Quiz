@@ -64,7 +64,7 @@ def write_to_xml(package: QuizPackage):
                     answer_element.text = answer
 
                 points_element = ElTree.SubElement(question_element, "Points")
-                points_element.text = question.get_points()
+                points_element.text = str(question.get_points())
 
                 type_content_element = ElTree.SubElement(question_element, "Type content")
                 type_content_element.text = question.get_type_content()
