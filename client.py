@@ -3,6 +3,8 @@ from network import Network
 import pickle
 import os
 import socket
+import subprocess
+from _thread import *
 pygame.font.init()
 
 width = 1600
@@ -12,6 +14,8 @@ pygame.display.set_caption("Client")
 
 btnWidth = 300
 btnHeight = 150
+
+playerName = "Player"
 
 ip_address = socket.gethostbyname(socket.gethostname())
 
@@ -39,61 +43,118 @@ class Button:
             return False
 
 
+COLOR_INACTIVE = pygame.Color('lightskyblue3')
+COLOR_ACTIVE = pygame.Color('dodgerblue2')
+FONT = pygame.font.Font(None, 32)
+
+class InputBox:
+    def __init__(self, x, y, w, h, text=''):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.color = COLOR_INACTIVE
+        self.text = text
+        self.txt_surface = FONT.render(text, True, self.color)
+        self.active = False
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                self.active = not self.active
+            else:
+                self.active = False
+            self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
+        if event.type == pygame.KEYDOWN:
+            if self.active:
+                if event.key == pygame.K_RETURN:
+                    return self.text
+                elif event.key == pygame.K_BACKSPACE:
+                    self.text = self.text[:-1]
+                else:
+                    self.text += event.unicode
+                self.txt_surface = FONT.render(self.text, True, self.color)
+
+    def update(self):
+        width = max(200, self.txt_surface.get_width()+10)
+        self.rect.w = width
+
+    def draw(self, screen):
+        screen.blit(self.txt_surface, (self.rect.x+5, self.rect.y+5))
+        pygame.draw.rect(screen, self.color, self.rect, 2)
+
+numberOfQuestion = 0
+btns = []
+question = 0
+movedPlayer = 10
+
 def redrawWindow(win, game, p):
+    global movedPlayer
     win.fill((128,128,128))
 
-    if not(game.connected()):
-        font = pygame.font.SysFont("comicsans", 80)
-        text = font.render("Waiting for Player...", 1, (255,0,0), True)
-        win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
+    choosed = False
+    i = 0
+    for w in game.pWent:
+        if w == True:
+            choosed = True
+            movedPlayer = i
+        i += 1
+    
+    if choosed:
+        x = 100
+        y = 100
+        width = 1000
+        height = 500
+        pygame.draw.rect(win, (0,0,0), (x, y, width, height))
+        font = pygame.font.SysFont("comicsans", 40)
+        text = font.render(game.questions[question][0], 1, (255,255,255))
+        win.blit(text, (x + round(width/2) - round(text.get_width()/2), y + round(height/2) - round(text.get_height()/2)))
+        if (p == movedPlayer):
+            inputBox = InputBox(round(width/2), 550, 200, 50)
+            run = True
+            while run:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        run = False
+                    answer = inputBox.handle_event(event)
+                    if answer:
+                        game.answers[p] = answer
+                        print(answer)
+                        run = False
+
+                inputBox.update()
+
+                win.fill((128, 128, 128))
+                
+                pygame.draw.rect(win, (0,0,0), (x, y, width, height))
+                font = pygame.font.SysFont("comicsans", 40)
+                text = font.render(game.questions[question][0], 1, (255,255,255))
+                win.blit(text, (x + round(width/2) - round(text.get_width()/2), y + round(height/2) - round(text.get_height()/2)))
+
+                inputBox.draw(win)
+
+                pygame.display.flip()
     else:
-        font = pygame.font.SysFont("comicsans", 60)
-        text = font.render("Your Move", 1, (0, 255,255))
-        win.blit(text, (80, 200))
-
-        text = font.render("Opponents", 1, (0, 255, 255))
-        win.blit(text, (380, 200))
-
-        move1 = game.get_player_move(0)
-        move2 = game.get_player_move(1)
-        if game.bothWent():
-            text1 = font.render(move1, 1, (0,0,0))
-            text2 = font.render(move2, 1, (0, 0, 0))
-        else:
-            if game.p1Went and p == 0:
-                text1 = font.render(move1, 1, (0,0,0))
-            elif game.p1Went:
-                text1 = font.render("Locked In", 1, (0, 0, 0))
-            else:
-                text1 = font.render("Waiting...", 1, (0, 0, 0))
-
-            if game.p2Went and p == 1:
-                text2 = font.render(move2, 1, (0,0,0))
-            elif game.p2Went:
-                text2 = font.render("Locked In", 1, (0, 0, 0))
-            else:
-                text2 = font.render("Waiting...", 1, (0, 0, 0))
-
-        if p == 1:
-            win.blit(text2, (100, 350))
-            win.blit(text1, (400, 350))
-        else:
-            win.blit(text1, (100, 350))
-            win.blit(text2, (400, 350))
-
         for btn in btns:
             btn.draw(win)
 
     pygame.display.update()
 
-
-btns = [Button("Rock", 50, 500, (0,0,0)), Button("Scissors", 250, 500, (255,0,0)), Button("Paper", 450, 500, (0,255,0))]
 def main():
+    global numberOfQuestion, question
     run = True
     clock = pygame.time.Clock()
     n = Network()
     player = int(n.getP())
     print("You are player", player)
+
+    game = n.send("numberOfQuestion")
+    numberOfQuestion = game.get_number_of_questions()
+
+    for i in range(numberOfQuestion):
+        if (player == 0):
+            btns.append(Button(game.questions[i][0][:12]+"...",300*i,50, (0,0,0)))
+        else:
+            btns.append(Button(game.questions[i][1],300*i,50, (0,0,0)))
+
+    game = n.send("Name: " + playerName)
 
     while run:
         clock.tick(60)
@@ -104,7 +165,7 @@ def main():
             print("Couldn't get game")
             break
 
-        if game.bothWent():
+        if game.went(player):
             redrawWindow(win, game, player)
             pygame.time.delay(500)
             try:
@@ -133,14 +194,19 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
+                i = 0
                 for btn in btns:
-                    if btn.click(pos) and game.connected():
-                        if player == 0:
-                            if not game.p1Went:
-                                n.send(btn.text)
-                        else:
-                            if not game.p2Went:
-                                n.send(btn.text)
+                    if btn.click(pos):
+                        if player != 10:
+                            canChoose = True
+                            for w in game.pWent:
+                                if w == True:
+                                    canChoose = False
+                            if canChoose:
+                                game.pWent[player] = True
+                                question = i
+                    i += 1
+                            
 
         redrawWindow(win, game, player)
 
@@ -181,20 +247,28 @@ def menu_screen():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 if (menu1 & menuBtns2[0].click(pos)):
-                    #os.system('python server.py')
-                    a_socket = socket.socket()
                     try:
-                        a_socket.connect((ip_address, 5555))
-                        a_socket.close()
+                        #start_new_thread(os.system('python server.py'))
+                        #subprocess.call(["python", "server. py"])
                         run = False
                     except:
                         errorText = "Hosting failed"
                         errorFlag = True
                         print(errorText)
+                if (menu1 & menuBtns2[1].click(pos)):
+                    run = False
                 if menuBtns1[0].click(pos):
                     menu1 = True
 
-    #main()
+    main()
 
-while True:
-    menu_screen()
+#while True:
+#    menu_screen()
+
+main()
+
+"""
+a_socket = socket.socket()
+a_socket.connect((ip_address, 5555))
+a_socket.close()
+"""

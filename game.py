@@ -1,54 +1,34 @@
 class Game:
-    def __init__(self, id):
-        self.p1Went = False
-        self.p2Went = False
-        self.ready = False
-        self.id = id
-        self.moves = [None, None]
-        self.wins = [0,0]
-        self.ties = 0
+    def __init__(self):
+        self.players = []
+        self.pWent = []
+        self.answers = []
+        self.scores = []
+        self.numberOfQuestions = 0
+        self.questions = []
 
-    def get_player_move(self, p):
-        """
-        :param p: [0,1]
-        :return: Move
-        """
-        return self.moves[p]
+    def add_player(self, p, name):
+        self.players[p] = name
 
-    def play(self, player, move):
-        self.moves[player] = move
-        if player == 0:
-            self.p1Went = True
-        else:
-            self.p2Went = True
+    def get_player_answer(self, p):
+        return self.answers[p]
+    
+    def get_number_of_questions(self):
+        return self.numberOfQuestions
+    
+    def set_number_of_questions(self, amount):
+        self.numberOfQuestions = amount
 
-    def connected(self):
-        return self.ready
+    def play(self, player, answer):
+        self.answers[player] = answer
+        self.pWent[player] = True
+    
+    def went(self, player):
+        return self.pWent[player]
 
-    def bothWent(self):
-        return self.p1Went and self.p2Went
-
-    def winner(self):
-
-        p1 = self.moves[0].upper()[0]
-        p2 = self.moves[1].upper()[0]
-
-        winner = -1
-        if p1 == "R" and p2 == "S":
-            winner = 0
-        elif p1 == "S" and p2 == "R":
-            winner = 1
-        elif p1 == "P" and p2 == "R":
-            winner = 0
-        elif p1 == "R" and p2 == "P":
-            winner = 1
-        elif p1 == "S" and p2 == "P":
-            winner = 0
-        elif p1 == "P" and p2 == "S":
-            winner = 1
-
-        return winner
+    def answered(self, player):
+        return self.answers[player] != ""
 
     def resetWent(self):
-        self.p1Went = False
-        self.p2Went = False
+        for p in self.pWent:
+            p = False
