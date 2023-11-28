@@ -82,11 +82,12 @@ class InputBox:
 
 numberOfQuestion = 0
 btns = []
-question = 0
 movedPlayer = 10
+answer = ()
+btnApprove = [Button("Correct", 100, 650, (0,0,0)), Button("Incorrect", 600, 650, (0,0,0))]
 
-def redrawWindow(win, game, p):
-    global movedPlayer
+def redrawWindow(win, network, game, p):
+    global movedPlayer, answer
     win.fill((128,128,128))
 
     choosed = False
@@ -96,27 +97,26 @@ def redrawWindow(win, game, p):
             choosed = True
             movedPlayer = i
         i += 1
-    
-    if choosed:
+
+    if choosed or game.answer:
         x = 100
         y = 100
         width = 1000
         height = 500
         pygame.draw.rect(win, (0,0,0), (x, y, width, height))
         font = pygame.font.SysFont("comicsans", 40)
-        text = font.render(game.questions[question][0], 1, (255,255,255))
+        text = font.render(game.questions[game.question][0], 1, (255,255,255))
         win.blit(text, (x + round(width/2) - round(text.get_width()/2), y + round(height/2) - round(text.get_height()/2)))
-        if (p == movedPlayer):
+        if (p == movedPlayer and not game.answers[p]):
             inputBox = InputBox(round(width/2), 550, 200, 50)
             run = True
             while run:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         run = False
-                    answer = inputBox.handle_event(event)
-                    if answer:
-                        game.answers[p] = answer
-                        print(answer)
+                    answerT = inputBox.handle_event(event)
+                    if answerT:
+                        game = network.send("Answer: "+answerT)
                         run = False
 
                 inputBox.update()
@@ -125,12 +125,21 @@ def redrawWindow(win, game, p):
                 
                 pygame.draw.rect(win, (0,0,0), (x, y, width, height))
                 font = pygame.font.SysFont("comicsans", 40)
-                text = font.render(game.questions[question][0], 1, (255,255,255))
+                text = font.render(game.questions[game.question][0], 1, (255,255,255))
                 win.blit(text, (x + round(width/2) - round(text.get_width()/2), y + round(height/2) - round(text.get_height()/2)))
 
                 inputBox.draw(win)
 
                 pygame.display.flip()
+        if (p == 0 and answer):
+            text1 = font.render("Player: "+answer[0], 1, (255,255,255))
+            text2 = font.render("Quiz answer: "+answer[1], 1, (255,255,255))
+            text3 = font.render("Player answer: "+answer[2], 1, (255,255,255))
+            win.blit(text1, (100, 450))
+            win.blit(text2, (100, 550))
+            win.blit(text3, (600, 550))
+            for btn in btnApprove:
+                btn.draw(win)
     else:
         for btn in btns:
             btn.draw(win)
@@ -138,7 +147,7 @@ def redrawWindow(win, game, p):
     pygame.display.update()
 
 def main():
-    global numberOfQuestion, question
+    global numberOfQuestion, answer
     run = True
     clock = pygame.time.Clock()
     n = Network()
@@ -155,6 +164,7 @@ def main():
             btns.append(Button(game.questions[i][1],300*i,50, (0,0,0)))
 
     game = n.send("Name: " + playerName)
+    a = True
 
     while run:
         clock.tick(60)
@@ -164,28 +174,10 @@ def main():
             run = False
             print("Couldn't get game")
             break
-
-        if game.went(player):
-            redrawWindow(win, game, player)
-            pygame.time.delay(500)
-            try:
-                game = n.send("reset")
-            except:
-                run = False
-                print("Couldn't get game")
-                break
-
-            font = pygame.font.SysFont("comicsans", 90)
-            if (game.winner() == 1 and player == 1) or (game.winner() == 0 and player == 0):
-                text = font.render("You Won!", 1, (255,0,0))
-            elif game.winner() == -1:
-                text = font.render("Tie Game!", 1, (255,0,0))
-            else:
-                text = font.render("You Lost...", 1, (255, 0, 0))
-
-            win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
-            pygame.display.update()
-            pygame.time.delay(2000)
+        
+        if player == 0 and game.answer and a:
+            answer = n.send("getAnswer")
+            a = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -197,18 +189,23 @@ def main():
                 i = 0
                 for btn in btns:
                     if btn.click(pos):
-                        if player != 10:
+                        if player != 0:
                             canChoose = True
                             for w in game.pWent:
                                 if w == True:
                                     canChoose = False
                             if canChoose:
-                                game.pWent[player] = True
-                                question = i
+                                game = n.send("move "+str(i))
                     i += 1
+                if btnApprove[0].click(pos):
+                    game = n.send("score "+answer[0]+"|"+game.questions[game.question][1])
+                    answer = ()
+                if btnApprove[1].click(pos):
+                    game = n.send("incorrect")
+                    answer = ()
                             
 
-        redrawWindow(win, game, player)
+        redrawWindow(win, n, game, player)
 
 menuBtns1 = [Button("Play", (width-btnWidth)/2, 250, (0,0,0)), Button("Create", (width-btnWidth)/2, 450, (0,255,0))]
 menuBtns2 = [Button("Host", (width-btnWidth)/2, 250, (255,0,0)), Button("Join", (width-btnWidth)/2, 450, (0,0,255))]

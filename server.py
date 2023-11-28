@@ -15,6 +15,7 @@ game = Game()
 
 for q in quiz:
   game.questions.append((q[0], q[1]))
+  game.showQuestions.append(True)
 
 #server = "26.95.134.185"
 server = socket.gethostbyname(socket.gethostname())
@@ -33,10 +34,11 @@ print("Waiting for a connection, Server Started")
 def threaded_client(conn, p):
     conn.send(str.encode(str(p)))
 
-    reply = ""
     while True:
         try:
             data = conn.recv(4096).decode()
+
+            if (data != "get"): print(data)
 
             if not data:
                 break
@@ -47,8 +49,27 @@ def threaded_client(conn, p):
                     game.set_number_of_questions(len(quiz))
                 elif data[:6] == "Name: ":
                     game.add_player(p, data[6:])
+                elif data[:8] == "Answer: ":
+                    game.play(p, data[8:])
+                elif data[:5] == "move ":
+                    game.move(p, data[5:])
+                elif data[:6] == "score " and p == 0:
+                    dat = data[6:].split("|")
+                    game.score(int(dat[0]), int(dat[1]))
+                    game.finQuestion()
+                elif data == "incorrect":
+                    game.finQuestion()
+                elif data == "getAnswer" and p == 0:
+                    player = 0
+                    for ans in game.answers:
+                        if ans != "":
+                            answer = (str(player), quiz[game.question][2][:-1], ans)
+                            conn.send(pickle.dumps(answer))
+                            break
+                        player += 1
                 elif data != "get":
                     game.play(p, data)
+
                 conn.sendall(pickle.dumps(game))
         except:
             break
@@ -60,7 +81,6 @@ def threaded_client(conn, p):
         game.answers.pop(p)
         game.scores.pop(p)
         game.players.pop(p)
-        print("Closing Game")
     except:
         pass
     conn.close()

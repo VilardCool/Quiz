@@ -3,9 +3,12 @@ class Game:
         self.players = []
         self.pWent = []
         self.answers = []
+        self.answer = False
         self.scores = []
         self.numberOfQuestions = 0
         self.questions = []
+        self.question = 0
+        self.showQuestions = []
 
     def add_player(self, p, name):
         self.players[p] = name
@@ -21,14 +24,22 @@ class Game:
 
     def play(self, player, answer):
         self.answers[player] = answer
+        self.answer = True
+        self.pWent[player] = False
+
+    def move(self, player, quest):
         self.pWent[player] = True
+        self.question = int(quest)
     
     def went(self, player):
         return self.pWent[player]
 
-    def answered(self, player):
-        return self.answers[player] != ""
+    def score(self, player, score):
+        self.scores[player] = score
 
-    def resetWent(self):
-        for p in self.pWent:
-            p = False
+    def finQuestion(self):
+        self.showQuestions[self.question] = False
+        self.question = 0
+        self.answer = False
+        for i in range(len(self.answers)):
+            self.answers[i] = ""
