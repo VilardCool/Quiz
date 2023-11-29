@@ -40,15 +40,16 @@ def write_to_xml(package: QuizPackage):
     data = ElTree.Element("package")
 
     for quiz_round in package.get_rounds():
-        round_element = ElTree.SubElement(data, "Round")
-        quiz_name_element = ElTree.SubElement(round_element, "Name of quiz")
+        quiz_name_element = ElTree.SubElement(data, "Quiz")
         quiz_name_element.text = package.get_name()
+
+        round_element = ElTree.SubElement(data, "Round")
 
         themes = quiz_round.get_themes()
 
         for theme in themes:
             theme_element = ElTree.SubElement(round_element, "Theme")
-            name_element = ElTree.SubElement(theme_element, "Name of theme")
+            name_element = ElTree.SubElement(theme_element, "Title")
             name_element.text = theme
             questions_element = ElTree.SubElement(theme_element, "Questions")
 
@@ -66,7 +67,7 @@ def write_to_xml(package: QuizPackage):
                 points_element = ElTree.SubElement(question_element, "Points")
                 points_element.text = str(question.get_points())
 
-                type_content_element = ElTree.SubElement(question_element, "Type content")
+                type_content_element = ElTree.SubElement(question_element, "Content")
                 type_content_element.text = question.get_type_content()
 
                 url_element = ElTree.SubElement(question_element, "URL")
