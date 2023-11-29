@@ -32,6 +32,9 @@ class QuizPackage:
     def get_name(self) -> str:
         return self.name
 
+    def set_name(self, new_name: str) -> None:
+        self.name = new_name
+
     def get_rounds(self) -> list[QuizRound]:
         return self.rounds
 
@@ -77,3 +80,29 @@ def write_to_xml(package: QuizPackage):
 
     with open(package.get_name() + ".quiz", "wb") as file_package:
         file_package.write(xml_text)
+
+
+def read_from_xml(file_path:str) -> QuizPackage:
+    tree = ElTree.parse(file_path)
+    root = tree.getroot()
+    name = root[0].text
+    rounds = []
+    for i in range(1, len(root)):
+        quiz_round = root[i]
+        round_ = {}
+        for theme in quiz_round:
+            title = theme[0].text
+            quiz_questions = theme[1]
+            questions = []
+            for question in quiz_questions:
+                text = question[0].text
+                answers = []
+                for answer in question[1]:
+                    answers.append(answer.text)
+                points = int(question[2].text)
+                content = question[3].text
+                url = question[4].text
+                questions.append(Question(text, answers, points, content, url))
+            round_[title] = questions
+        rounds.append(QuizRound(round_))
+    return QuizPackage(name, rounds, False)
