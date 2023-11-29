@@ -42,7 +42,6 @@ class Button:
         else:
             return False
 
-
 COLOR_INACTIVE = pygame.Color('lightskyblue3')
 COLOR_ACTIVE = pygame.Color('dodgerblue2')
 FONT = pygame.font.Font(None, 32)
@@ -82,32 +81,33 @@ class InputBox:
 
 numberOfQuestion = 0
 btns = []
-movedPlayer = 10
+movedPlayer = 0
 answer = ()
 btnApprove = [Button("Correct", 100, 650, (0,0,0)), Button("Incorrect", 600, 650, (0,0,0))]
 
 def redrawWindow(win, network, game, p):
     global movedPlayer, answer
     win.fill((128,128,128))
+    font = pygame.font.SysFont("comicsans", 40)
 
     choosed = False
-    i = 0
-    for w in game.pWent:
-        if w == True:
+    for player in range(len(game.pWent)):
+        if game.pWent[player] == True:
             choosed = True
-            movedPlayer = i
-        i += 1
+            movedPlayer = player
+            break
 
-    if choosed or game.answer:
+    orStatement = lambda a, b: True if a or b else False
+    andStatement = lambda a, b: True if a and b else False
+    if orStatement(choosed, game.get_player_answer(movedPlayer)):
         x = 100
         y = 100
         width = 1000
         height = 500
         pygame.draw.rect(win, (0,0,0), (x, y, width, height))
-        font = pygame.font.SysFont("comicsans", 40)
         text = font.render(game.questions[game.question][0], 1, (255,255,255))
         win.blit(text, (x + round(width/2) - round(text.get_width()/2), y + round(height/2) - round(text.get_height()/2)))
-        if (p == movedPlayer and not game.answers[p]):
+        if andStatement(p == movedPlayer, not game.answers[p]):
             inputBox = InputBox(round(width/2), 550, 200, 50)
             run = True
             while run:
@@ -124,14 +124,12 @@ def redrawWindow(win, network, game, p):
                 win.fill((128, 128, 128))
                 
                 pygame.draw.rect(win, (0,0,0), (x, y, width, height))
-                font = pygame.font.SysFont("comicsans", 40)
-                text = font.render(game.questions[game.question][0], 1, (255,255,255))
                 win.blit(text, (x + round(width/2) - round(text.get_width()/2), y + round(height/2) - round(text.get_height()/2)))
 
                 inputBox.draw(win)
 
                 pygame.display.flip()
-        if (p == 0 and answer):
+        if andStatement(p == 0, answer):
             text1 = font.render("Player: "+answer[0], 1, (255,255,255))
             text2 = font.render("Quiz answer: "+answer[1], 1, (255,255,255))
             text3 = font.render("Player answer: "+answer[2], 1, (255,255,255))
@@ -141,8 +139,20 @@ def redrawWindow(win, network, game, p):
             for btn in btnApprove:
                 btn.draw(win)
     else:
-        for btn in btns:
-            btn.draw(win)
+        text1 = font.render("Judge", 1, (0,0,0))
+        win.blit(text1, (100, 700))
+        for i in range(len(game.players)):
+            text2 = font.render(game.players[i], 1, (0,0,0))
+            if (i == 0): win.blit(text2, (100, 800))
+            else: win.blit(text2, (300*i, 700))
+        for i in range(len(game.scores)):
+            text3 = font.render(str(game.scores[i]), 1, (0,0,0))
+            if (i != 0):
+                win.blit(text3, (300*i, 800))
+        
+        for i in range(len(btns)):
+            if game.showQuestions[i]:
+                btns[i].draw(win)
 
     pygame.display.update()
 
@@ -164,7 +174,6 @@ def main():
             btns.append(Button(game.questions[i][1],300*i,50, (0,0,0)))
 
     game = n.send("Name: " + playerName)
-    a = True
 
     while run:
         clock.tick(60)
@@ -175,9 +184,8 @@ def main():
             print("Couldn't get game")
             break
         
-        if player == 0 and game.answer and a:
+        if player == 0 and game.answer:
             answer = n.send("getAnswer")
-            a = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -245,8 +253,6 @@ def menu_screen():
                 pos = pygame.mouse.get_pos()
                 if (menu1 & menuBtns2[0].click(pos)):
                     try:
-                        #start_new_thread(os.system('python server.py'))
-                        #subprocess.call(["python", "server. py"])
                         run = False
                     except:
                         errorText = "Hosting failed"
@@ -259,13 +265,5 @@ def menu_screen():
 
     main()
 
-#while True:
-#    menu_screen()
-
-main()
-
-"""
-a_socket = socket.socket()
-a_socket.connect((ip_address, 5555))
-a_socket.close()
-"""
+while True:
+    menu_screen()

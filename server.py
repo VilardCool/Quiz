@@ -65,12 +65,14 @@ def threaded_client(conn, p):
                         if ans != "":
                             answer = (str(player), quiz[game.question][2][:-1], ans)
                             conn.send(pickle.dumps(answer))
+                            game.answerChange()
                             break
                         player += 1
                 elif data != "get":
                     game.play(p, data)
 
-                conn.sendall(pickle.dumps(game))
+                if not (data == "getAnswer" and p == 0):
+                    conn.sendall(pickle.dumps(game))
         except:
             break
 

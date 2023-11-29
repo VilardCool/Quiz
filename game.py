@@ -27,6 +27,9 @@ class Game:
         self.answer = True
         self.pWent[player] = False
 
+    def answerChange(self):
+        self.answer = False
+
     def move(self, player, quest):
         self.pWent[player] = True
         self.question = int(quest)
@@ -35,11 +38,10 @@ class Game:
         return self.pWent[player]
 
     def score(self, player, score):
-        self.scores[player] = score
+        self.scores[player] += score
 
     def finQuestion(self):
         self.showQuestions[self.question] = False
         self.question = 0
-        self.answer = False
         for i in range(len(self.answers)):
             self.answers[i] = ""
