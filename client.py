@@ -20,13 +20,13 @@ playerName = "Player"
 ip_address = socket.gethostbyname(socket.gethostname())
 
 class Button:
-    def __init__(self, text, x, y, color):
+    def __init__(self, text, x, y, color, width, height):
         self.text = text
         self.x = x
         self.y = y
         self.color = color
-        self.width = btnWidth
-        self.height = btnHeight
+        self.width = width
+        self.height = height
 
     def draw(self, win):
         pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height))
@@ -83,7 +83,8 @@ numberOfQuestion = 0
 btns = []
 movedPlayer = 0
 answer = ()
-btnApprove = [Button("Correct", 100, 650, (0,0,0)), Button("Incorrect", 600, 650, (0,0,0))]
+btnApprove = [Button("Correct", 100, 650, (0,0,0), btnWidth, btnHeight),
+              Button("Incorrect", 600, 650, (0,0,0), btnWidth, btnHeight)]
 
 def redrawWindow(win, network, game, p):
     global movedPlayer, answer
@@ -168,10 +169,12 @@ def main():
     numberOfQuestion = game.get_number_of_questions()
 
     for i in range(numberOfQuestion):
-        if (player == 0):
-            btns.append(Button(game.questions[i][0][:12]+"...",300*i,50, (0,0,0)))
+        if player == 0:
+            btns.append(Button(game.questions[i][0][:6] + "...", 100 + ((width-200) / numberOfQuestion) * i, 150,
+                               (0, 0, 0), (width-200) / numberOfQuestion, btnHeight))
         else:
-            btns.append(Button(game.questions[i][1],300*i,50, (0,0,0)))
+            btns.append(Button(game.questions[i][1], 100 + ((width-200) / numberOfQuestion) * i, 150, (0, 0, 0),
+                               (width-200) / numberOfQuestion, btnHeight))
 
     game = n.send("Name: " + playerName)
 
@@ -215,8 +218,10 @@ def main():
 
         redrawWindow(win, n, game, player)
 
-menuBtns1 = [Button("Play", (width-btnWidth)/2, 250, (0,0,0)), Button("Create", (width-btnWidth)/2, 450, (0,255,0))]
-menuBtns2 = [Button("Host", (width-btnWidth)/2, 250, (255,0,0)), Button("Join", (width-btnWidth)/2, 450, (0,0,255))]
+menuBtns1 = [Button("Play", (width - btnWidth) / 2, 250, (0,0,0), btnWidth, btnHeight),
+             Button("Create", (width-btnWidth)/2, 450, (0,255,0), btnWidth, btnHeight)]
+menuBtns2 = [Button("Host", (width-btnWidth)/2, 250, (255,0,0), btnWidth, btnHeight),
+             Button("Join", (width-btnWidth)/2, 450, (0,0,255), btnWidth, btnHeight)]
 menu = True
 menu1 = False
 errorFlag = False

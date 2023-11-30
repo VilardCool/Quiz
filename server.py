@@ -2,19 +2,25 @@ import socket
 from _thread import *
 import pickle
 from game import Game
+from QuizCreator.quiz_package import QuizPackage, read_from_xml
 
-quiz = []
+# quiz = []
 
-f = open("quiz.txt", "r")
-for l in f:
-  quiz.append(l.split("|"))
+package = read_from_xml("QuizCreator/New game.quiz")
+# f = open("quiz.txt", "r")
+# for l in f:
+#   quiz.append(l.split("|"))
+round1 = package.get_rounds()[0]
 
 listOfClients=[]
 
 game = Game()
+themes = list(round1.get_themes())
 
-for q in quiz:
-  game.questions.append((q[0], q[1]))
+theme = round1.get_questions_by_theme(themes[0])
+
+for q in theme:
+  game.questions.append((q.get_text(), str(q.get_points())))
   game.showQuestions.append(True)
 
 #server = "26.95.134.185"
@@ -46,7 +52,7 @@ def threaded_client(conn, p):
                 if data == "reset":
                     game.resetWent()
                 elif data == "numberOfQuestion":
-                    game.set_number_of_questions(len(quiz))
+                    game.set_number_of_questions(len(theme))
                 elif data[:6] == "Name: ":
                     game.add_player(p, data[6:])
                 elif data[:8] == "Answer: ":
@@ -63,7 +69,7 @@ def threaded_client(conn, p):
                     player = 0
                     for ans in game.answers:
                         if ans != "":
-                            answer = (str(player), quiz[game.question][2][:-1], ans)
+                            answer = (str(player), theme[game.question].get_answers()[0], ans)
                             conn.send(pickle.dumps(answer))
                             game.answerChange()
                             break

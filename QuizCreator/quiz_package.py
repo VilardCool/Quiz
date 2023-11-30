@@ -2,8 +2,8 @@ from typing import Optional
 
 import xml.etree.ElementTree as ElTree
 
-from quiz_round import QuizRound
-from question import Question
+from QuizCreator.quiz_round import QuizRound
+from QuizCreator.question import Question
 
 
 class QuizPackage:

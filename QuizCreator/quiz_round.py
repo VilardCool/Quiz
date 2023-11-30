@@ -1,6 +1,6 @@
 from typing import Optional
 
-from question import Question
+from QuizCreator.question import Question
 
 
 class QuizRound:
