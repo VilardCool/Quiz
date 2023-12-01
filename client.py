@@ -1,8 +1,8 @@
 import pygame
 from network import Network
-import pickle
-import os
+import sys
 import socket
+import re
 import subprocess
 from _thread import *
 
@@ -16,8 +16,7 @@ color = 0, 0, 0
 btnWidth = width / 4
 btnHeight = height / 6
 playerName = "Player"
-
-ip_address = socket.gethostbyname(socket.gethostname())
+ip_address = ""
 
 
 class Button:
@@ -169,11 +168,18 @@ def redrawWindow(win, network, game, p):
 
 
 def main():
-    global numberOfQuestion, answer
+    global numberOfQuestion, answer, errorText, errorFlag, joinFlag
     run = True
     clock = pygame.time.Clock()
-    n = Network()
-    player = int(n.getP())
+    if (ip_address): address = ip_address
+    else: address = socket.gethostbyname(socket.gethostname())
+    try:
+        n = Network(address)
+        player = int(n.getP())
+    except:
+        errorFlag = True
+        errorText = "No game on this IP address"
+        menu_screen()
     print("You are player", player)
 
     game = n.send("numberOfQuestion")
@@ -242,13 +248,19 @@ menu = True
 menu1 = False
 menu2 = False
 errorFlag = False
+joinFlag = False
 errorText = "No error"
 
 
 def menu_screen():
-    global menu, menu1, menu2, errorFlag, playerName
+    global menu, menu1, menu2, errorFlag, playerName, joinFlag, ip_address
     run = True
+    joinRun = True
     clock = pygame.time.Clock()
+
+    font = pygame.font.SysFont("comicsans", 80)
+    text2 = font.render("IP address", 1, (0,255,0))
+    inputBox = InputBox(width/2-100, 550, 200, 50)
 
     while run:
         clock.tick(60)
@@ -313,6 +325,35 @@ def menu_screen():
             text = font.render("Hosting failed", 1, (255, 0, 0))
             win.blit(text, (width / 2 - text.get_width() / 2, 50))
 
+        if (joinFlag):
+            while joinRun:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        run = False
+                    answerT = inputBox.handle_event(event)
+                    if answerT:
+                        match=re.fullmatch(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$",answerT)
+                        if match:
+                            ip_address = answerT
+                            joinRun = False
+                            run = False
+                        else:
+                            text2 = font.render("Not correct IP address", 1, (0,255,0))
+
+                inputBox.update()
+
+                win.fill((128, 128, 128))
+
+                if (errorFlag):
+                    text3 = font.render(errorText, 1, (255,0,0))
+                    win.blit(text3, (width/2 - text.get_width()/2, 50))
+                pygame.draw.rect(win, (0,0,0), (width/6, height/4, width/1.5, height/2))
+                win.blit(text2, (0 + round(width/2) - round(text2.get_width()/2), 0 + round(height/2) - round(text2.get_height()/2)))
+
+                inputBox.draw(win)
+
+                pygame.display.flip()
+
         pygame.display.update()
 
         for event in pygame.event.get():
@@ -324,12 +365,11 @@ def menu_screen():
                 if (menu1 & menuBtns2[0].click(pos)):
                     try:
                         run = False
+                        subprocess.Popen([sys.executable, "server.py"])
                     except:
-                        errorText = "Hosting failed"
                         errorFlag = True
-                        print(errorText)
                 if (menu1 & menuBtns2[1].click(pos)):
-                    run = False
+                    joinFlag = True
                 if menuBtns3[0].click(pos):  # settings off
                     menu2 = False
 
