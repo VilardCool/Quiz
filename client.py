@@ -231,15 +231,13 @@ def main():
 
 menuBtns1 = [Button("Play", (width - btnWidth) / 2, height / 2.5, (114, 25, 90), btnWidth, btnHeight),
              Button("Create", (width - btnWidth) / 2, height / 1.7, (114, 25, 90), btnWidth, btnHeight),
-             Button("Setings", (width - btnWidth) / 2, height / 1.3, (114, 25, 90), btnWidth, btnHeight)
+             Button("Settings", (width - btnWidth) / 2, height / 1.3, (114, 25, 90), btnWidth, btnHeight)
              ]
 menuBtns2 = [Button("Host", (width - btnWidth) / 2, height / 2.5, (48, 76, 137), btnWidth, btnHeight),
              Button("Join", (width - btnWidth) / 2, height / 1.7, (48, 76, 137), btnWidth, btnHeight),
              Button("Back", (width - btnWidth) / 1, height / 1.2, (148, 16, 54), btnWidth, btnHeight)]
 
-menuBtns3 = [Button("Join", (width - btnWidth) / 1, height / 8, (125, 0, 0), btnWidth, btnHeight),
-             Button("Apply", (width - btnWidth) / 1, height / 3, (125, 0, 0), btnWidth, btnHeight),
-             Button("Back", (width - btnWidth) / 1, height / 1.2, (148, 16, 54), btnWidth, btnHeight)]
+menuBtns3 = [Button("Back", (width - btnWidth) / 1, height / 1.2, (148, 16, 54), btnWidth, btnHeight)]
 menu = True
 menu1 = False
 menu2 = False
@@ -265,23 +263,44 @@ def menu_screen():
                     win.blit(text1, ((width - btnWidth) / 2 - 70, height / 8))
 
             elif (menu2):
+
                 for btn in menuBtns3:
-                    btn.draw(win)
-
                     font = pygame.font.SysFont("comicsans", 100)
-                    text1 = font.render("Setings", 1, (0, 0, 0))
-                    win.blit(text1, ((width - btnWidth) / 2 - 70, height / 8))
-
-                    pl = "Player name :"
+                    text1 = font.render("Settings", 1, (0, 0, 0))
+                    pl = "Player name: "
                     texttext = pl + playerName
                     font = pygame.font.SysFont("comicsans", 50)
                     text2 = font.render(texttext, 1, (0, 0, 0))
-                    win.blit(text2, ((width - btnWidth) / 8, height / 3))
+                    font = pygame.font.SysFont("comicsans", 60)
+                    text4 = font.render("Change name", 1, (0, 0, 0))
+                    inputBox = InputBox((width - btnWidth) / 8, height / 2+100, 500, 50)
+                    run_box = True
+                    while run_box:
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                run = False
+                            Player = inputBox.handle_event(event)
+                            if Player:
+                                playerName=Player
+                                run_box = False
+                            if event.type == pygame.MOUSEBUTTONDOWN:
+                                pos = pygame.mouse.get_pos()
+                                if (menuBtns3[0].click(pos)):
+                                    run_box = False
+                                    menu2=False
+                        inputBox.update()
 
-                    # inputBox= InputBox(round(width / 2), round(width/2), 200, 50)
-                    # playerName = inputBox.handle_event(event)
-                    # inputBox.update()
-                    # inputBox.draw(win)
+                        win.fill((113, 169, 247))
+                        btn.draw(win)
+                        pygame.draw.rect(win, (48, 76, 137), ((width - btnWidth) / 8, height / 2, btnWidth, btnHeight))
+                        win.blit(text4, ((width - btnWidth) / 8, height / 2))
+                        win.blit(text2, ((width - btnWidth) / 8, height / 3))
+                        win.blit(text1, ((width - btnWidth) / 2 - 70, height / 8))
+                        inputBox.draw(win)
+
+                        pygame.display.flip()
+
+
             else:
                 for btn in menuBtns1:
                     btn.draw(win)
@@ -311,19 +330,20 @@ def menu_screen():
                         print(errorText)
                 if (menu1 & menuBtns2[1].click(pos)):
                     run = False
-                if menuBtns3[2].click(pos):  # setings off
+                if menuBtns3[0].click(pos):  # settings off
                     menu2 = False
+
                 if menuBtns1[0].click(pos):  # play on
                     menu1 = True
                 if menuBtns2[2].click(pos):  # play off
                     menu1 = False
-                if menuBtns1[1].click(pos):  # setings on
+                if menuBtns1[1].click(pos):  # settings on
                     menu2 = True
                     # width = 1500 #test mode
                     # height = 550
                     # pygame.display.update()
                     # pygame.display.set_mode((width, height))
-                if menuBtns1[2].click(pos):  # setings on
+                if menuBtns1[2].click(pos):  # settings on
                     menu2 = True
 
     main()
